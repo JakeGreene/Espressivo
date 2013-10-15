@@ -9,7 +9,8 @@ import scalafx.scene.Scene
 
 object Espressivo extends JFXApp {
   implicit val system = ActorSystem("espressivo-system")
-  val service = system.actorOf(Props[HttpServer], "espressivo-server")
+  val musicPlayer = system.actorOf(Props[JukeBox], "espressivo-player")
+  val service = system.actorOf(Props(new HttpServer(musicPlayer)), "espressivo-server")
   val host = "localhost"
   val port = 8080
   IO(Http) ! Http.Bind(service, interface = host, port = port)
