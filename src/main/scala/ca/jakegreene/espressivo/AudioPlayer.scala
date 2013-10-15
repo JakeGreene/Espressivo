@@ -15,4 +15,5 @@ object AudioPlayer extends JFXApp {
     title = "Audio Player 1"
     scene = new Scene(200, 200)
   }
+  
 }
