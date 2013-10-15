@@ -1,3 +1,4 @@
 package ca.jakegreene.espressivo
 
-case class Song(name: String, band: String, id: Int)
+case class SongDescription(name: String, band: String, id: SongId)
+case class SongId(id: Int)

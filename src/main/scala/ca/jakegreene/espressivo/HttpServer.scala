@@ -14,7 +14,8 @@ case class BasicResponse(msg: String)
 
 object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val responseFormat = jsonFormat1(BasicResponse)
-  implicit val songFormat = jsonFormat3(Song)
+  implicit val songIdFormat = jsonFormat1(SongId)
+  implicit val songFormat = jsonFormat3(SongDescription)
 }
 
 class HttpServer(player: ActorRef) extends Actor with HttpService {
@@ -22,7 +23,6 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
   import spray.httpx.SprayJsonSupport._
   
   def actorRefFactory = context
-  val songsById = Map((1 -> Song("cry me a river", "ella", 1)), (2 -> Song("sing, sing, sing", "benny goodman", 2)))
 
   val myRoute =
     path("") {
@@ -32,19 +32,20 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
     } ~
       path("songs") {
         get {
-          complete(songsById.values)
+          //complete(songsById.values)
+          complete(BasicResponse("Not Available"))
         }
       } ~
       path("songs" / IntNumber) { songId =>
         get {
-          complete(songsById(songId))
+          //complete(songsById(songId))
+          complete(BasicResponse("Not Available"))
         }
       } ~
-      path("play") {
+      path("play" / IntNumber) { songId =>
         get {
           complete {
-            player ! Play(Song("keeper", "dunno", 1))
-            println("Playing Media")
+            player ! Play(SongId(songId))
             BasicResponse("Media Playing")
           }
         }
