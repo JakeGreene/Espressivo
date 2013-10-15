@@ -42,7 +42,9 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
       path("songs" / IntNumber) { songId =>
         get {
           //complete(songsById(songId))
-          complete(BasicResponse("Not Available"))
+          complete {
+            (player ? GetSong(SongId(songId))).mapTo[SongDescription]
+          }
         }
       } ~
       path("play" / IntNumber) { songId =>

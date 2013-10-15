@@ -7,6 +7,7 @@ import scalafx.scene.media.Media
 sealed trait Request
 case class Play(song: SongId) extends Request
 case object GetMusicLibrary extends Request
+case class GetSong(id: SongId) extends Request
 sealed trait Response
 case class MusicLibrary(library: Iterable[SongDescription]) extends Response
 
@@ -34,6 +35,7 @@ class JukeBox extends Actor {
   def receive = {
     case Play(song) => playSong(song)
     case GetMusicLibrary => sender ! MusicLibrary(songLibrary.values.map(song => song.description))
+    case GetSong(id) => sender ! songLibrary(id).description
   }
   
   private def playSong(id: SongId) {
