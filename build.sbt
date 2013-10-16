@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
     "io.spray" % "spray-routing" % "1.1-M8",
     "io.spray" % "spray-can" % "1.1-M8",
     "io.spray" %%  "spray-json" % "1.2.5",
-    "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test",
+    "org.scalatest" % "scalatest_2.10" % "2.0.RC2" % "test",
     "org.scala-lang" % "scala-reflect" % "2.10.2",
     "com.novus" %% "salat" % "1.9.3",
     "org.scalafx" %% "scalafx" % "1.0.0-M5"
