@@ -26,6 +26,7 @@ libraryDependencies ++= Seq(
     "io.spray" %%  "spray-json" % "1.2.5",
     "org.scalatest" % "scalatest_2.10" % "2.0.RC2" % "test",
     "org.scala-lang" % "scala-reflect" % "2.10.2",
-    "com.novus" %% "salat" % "1.9.3",
-    "org.scalafx" %% "scalafx" % "1.0.0-M5"
+    "org.scalafx" %% "scalafx" % "1.0.0-M5",
+    "org.mockito" % "mockito-all" % "1.9.5",
+    "com.github.nscala-time" %% "nscala-time" % "0.6.0"
 )
