@@ -16,11 +16,18 @@ case class MusicLibrary(songs: Iterable[SongDescription]) extends Response
 case class SongId(id: Int)
 case class SongDescription(id: SongId, name: String)
 
+object JukeBox {
+  def apply(library: Map[SongId, Song]) = new JukeBox(library)
+  def describe(id: SongId, song: Song): SongDescription = SongDescription(id, song.title)
+  def describe(tuple: Tuple2[SongId, Song]): SongDescription = (describe _).tupled(tuple)
+}
+
 class JukeBox(songLibrary: Map[SongId, Song]) extends Actor {
+  import JukeBox._
   var currentSong: Option[SongController] = None
   def receive = {
     case Play(song) => playSong(song)
-    case GetMusicLibrary => sender ! MusicLibrary(songLibrary.map(entry => SongDescription(entry._1, entry._2.title)))
+    case GetMusicLibrary => sender ! MusicLibrary(songLibrary.map(entry => describe(entry)))
     case GetSong(id) => sender ! SongDescription(id, songLibrary(id).title)
   }
   
