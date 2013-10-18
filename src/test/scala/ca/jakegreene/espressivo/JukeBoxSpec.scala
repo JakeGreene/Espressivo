@@ -12,7 +12,7 @@ import akka.testkit.TestKit
 import akka.util.Timeout
 import ca.jakegreene.espressivo.music.Song
 import scala.concurrent.Await
-
+import ca.jakegreene.espressivo.JukeBox._
 
 class JukeBoxSpec extends TestKit(ActorSystem("JukeBoxSpec")) with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar {
   

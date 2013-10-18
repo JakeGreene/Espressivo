@@ -6,17 +6,17 @@ import scalafx.scene.media.Media
 import ca.jakegreene.espressivo.music.Song
 import ca.jakegreene.espressivo.music.SongController
 
-sealed trait Request
-case class Play(song: SongId) extends Request
-case object GetMusicLibrary extends Request
-case class GetSong(id: SongId) extends Request
-sealed trait Response
-case class MusicLibrary(songs: Iterable[SongEntry]) extends Response
-
 case class SongId(id: Int)
 case class SongEntry(id: SongId, song: Song)
 
 object JukeBox {
+  sealed trait Request
+  case class Play(song: SongId) extends Request
+  case object GetMusicLibrary extends Request
+  case class GetSong(id: SongId) extends Request
+  sealed trait Response
+  case class MusicLibrary(songs: Iterable[SongEntry]) extends Response
+  
   def apply(library: Map[SongId, Song]) = new JukeBox(library)
   def entry(id: SongId, song: Song): SongEntry = SongEntry(id, song)
   def entry(tuple: Tuple2[SongId, Song]): SongEntry = (entry _).tupled(tuple)

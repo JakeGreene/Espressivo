@@ -28,6 +28,7 @@ object HttpServer {
 class HttpServer(player: ActorRef) extends Actor with HttpService {
   import MyJsonProtocol._
   import HttpServer._
+  import JukeBox._
   import spray.httpx.SprayJsonSupport._
   
   def actorRefFactory = context
