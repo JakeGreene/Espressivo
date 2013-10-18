@@ -7,6 +7,7 @@ import org.joda.time.Duration
  */
 trait Song {
   def duration: Duration
+  def title: String = metadata("title")
   def metadata: Map[String, String]
   def createController(): SongController
 }

@@ -8,6 +8,8 @@ import scalafx.application.JFXApp
 import scalafx.scene.Scene
 import scalafx.scene.media.Media
 import scalafx.scene.media.MediaPlayer
+import ca.jakegreene.espressivo.music.Song
+import ca.jakegreene.espressivo.music.ScalafxSong
 
 object Espressivo extends JFXApp {
   implicit val system = ActorSystem("espressivo-system")
@@ -29,10 +31,8 @@ object Espressivo extends JFXApp {
       (location, id) <- songLocations.zipWithIndex
       resource = getClass.getResource(location)
       media = new Media(resource.toString)
-      mediaPlayer = new MediaPlayer(media)
+      song = new ScalafxSong(media)
       songId = SongId(id)
-      description = SongDescription(songId, location)
-      song = Song(description, mediaPlayer)
     } yield (songId, song)).toMap
   }
 }

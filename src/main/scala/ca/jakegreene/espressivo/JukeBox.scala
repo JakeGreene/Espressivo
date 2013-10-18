@@ -3,6 +3,8 @@ package ca.jakegreene.espressivo
 import akka.actor.Actor
 import scalafx.scene.media.MediaPlayer
 import scalafx.scene.media.Media
+import ca.jakegreene.espressivo.music.Song
+import ca.jakegreene.espressivo.music.SongController
 
 sealed trait Request
 case class Play(song: SongId) extends Request
@@ -11,21 +13,22 @@ case class GetSong(id: SongId) extends Request
 sealed trait Response
 case class MusicLibrary(songs: Iterable[SongDescription]) extends Response
 
-
-case class Song(description: SongDescription, media: MediaPlayer)
+case class SongId(id: Int)
+case class SongDescription(id: SongId, name: String)
 
 class JukeBox(songLibrary: Map[SongId, Song]) extends Actor {
-  var currentSong: Option[MediaPlayer] = None
+  var currentSong: Option[SongController] = None
   def receive = {
     case Play(song) => playSong(song)
-    case GetMusicLibrary => sender ! MusicLibrary(songLibrary.values.map(song => song.description))
-    case GetSong(id) => sender ! songLibrary(id).description
+    case GetMusicLibrary => sender ! MusicLibrary(songLibrary.map(entry => SongDescription(entry._1, entry._2.title)))
+    case GetSong(id) => sender ! SongDescription(id, songLibrary(id).title)
   }
   
   private def playSong(id: SongId) {
     if(currentSong.isDefined) currentSong.get.stop()
-    val mediaPlayer = songLibrary(id).media
-    currentSong = Some(mediaPlayer)
-    mediaPlayer.play()
+    val song = songLibrary(id)
+    val controller = song.createController()
+    currentSong = Some(controller)
+    controller.play()
   }
 }
