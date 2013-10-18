@@ -26,18 +26,18 @@ class JukeBoxSpec extends TestKit(ActorSystem("JukeBoxSpec")) with WordSpecLike 
       val futureLibrary = (jukebox ? GetMusicLibrary).mapTo[MusicLibrary]
       val returnedLibrary = Await.result(futureLibrary, 1 seconds)
       returnedLibrary.songs.size should be (libSize)
-      val songDescriptions = songsById.map(entry => JukeBox.describe(entry))
-      returnedLibrary.songs should be (songDescriptions)
+      val songEntries = songsById.map(tuple => JukeBox.entry(tuple))
+      returnedLibrary.songs should be (songEntries)
     }
     "provide a song when queried by ID" in {
       val libSize = 2
       val songsById = createLibrary(libSize)
       val jukebox = TestActorRef(new JukeBox(songsById))
-      val songDescriptions = songsById.map(entry => (JukeBox.describe _).tupled(entry))
+      val songEntries = songsById.map(tuple => JukeBox.entry(tuple))
       for (i <- 1 to libSize) {
-        val futureEntry = (jukebox ? GetSong(SongId(i))).mapTo[SongDescription]
+        val futureEntry = (jukebox ? GetSong(SongId(i))).mapTo[SongEntry]
         val entry = Await.result(futureEntry, 1 seconds)
-        songDescriptions should contain (entry)
+        songEntries should contain (entry)
       }
     }
   }

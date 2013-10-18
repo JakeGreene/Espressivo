@@ -11,15 +11,15 @@ case class Play(song: SongId) extends Request
 case object GetMusicLibrary extends Request
 case class GetSong(id: SongId) extends Request
 sealed trait Response
-case class MusicLibrary(songs: Iterable[SongDescription]) extends Response
+case class MusicLibrary(songs: Iterable[SongEntry]) extends Response
 
 case class SongId(id: Int)
-case class SongDescription(id: SongId, name: String)
+case class SongEntry(id: SongId, song: Song)
 
 object JukeBox {
   def apply(library: Map[SongId, Song]) = new JukeBox(library)
-  def describe(id: SongId, song: Song): SongDescription = SongDescription(id, song.title)
-  def describe(tuple: Tuple2[SongId, Song]): SongDescription = (describe _).tupled(tuple)
+  def entry(id: SongId, song: Song): SongEntry = SongEntry(id, song)
+  def entry(tuple: Tuple2[SongId, Song]): SongEntry = (entry _).tupled(tuple)
 }
 
 class JukeBox(songLibrary: Map[SongId, Song]) extends Actor {
@@ -27,8 +27,8 @@ class JukeBox(songLibrary: Map[SongId, Song]) extends Actor {
   var currentSong: Option[SongController] = None
   def receive = {
     case Play(song) => playSong(song)
-    case GetMusicLibrary => sender ! MusicLibrary(songLibrary.map(entry => describe(entry)))
-    case GetSong(id) => sender ! SongDescription(id, songLibrary(id).title)
+    case GetMusicLibrary => sender ! MusicLibrary(songLibrary.map(tuple => entry(tuple)))
+    case GetSong(id) => sender ! SongEntry(id, songLibrary(id))
   }
   
   private def playSong(id: SongId) {

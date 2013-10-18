@@ -9,6 +9,7 @@ import spray.routing._
 import akka.util.Timeout
 import scala.concurrent.duration._
 import reflect.ClassTag
+import ca.jakegreene.espressivo.music.Song
 
 case class BasicResponse(msg: String)
 
@@ -18,8 +19,15 @@ object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val songDescFormat = jsonFormat2(SongDescription)
 }
 
+case class SongDescription(id: SongId, name: String)
+
+object HttpServer {
+  def describe(entry: SongEntry): SongDescription = SongDescription(entry.id, entry.song.title)
+}
+
 class HttpServer(player: ActorRef) extends Actor with HttpService {
   import MyJsonProtocol._
+  import HttpServer._
   import spray.httpx.SprayJsonSupport._
   
   def actorRefFactory = context
@@ -35,15 +43,14 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
       path("songs") {
         get {
           complete {
-           (player ? GetMusicLibrary).mapTo[MusicLibrary].map(lib => lib.songs)
+           (player ? GetMusicLibrary).mapTo[MusicLibrary].map(lib => lib.songs.map(entry => describe(entry)))
           }
         }
       } ~
       path("songs" / IntNumber) { songId =>
         get {
-          //complete(songsById(songId))
           complete {
-            (player ? GetSong(SongId(songId))).mapTo[SongDescription]
+            (player ? GetSong(SongId(songId))).mapTo[SongEntry].map(entry => describe(entry))
           }
         }
       } ~
