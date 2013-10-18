@@ -17,7 +17,7 @@ class ScalafxSong(val media: Media) extends Song {
   def createController() = new ScalafxSongController(this)
 }
 
-class ScalafxSongController(song: ScalafxSong) extends SongController {
+class ScalafxSongController(val song: ScalafxSong) extends SongController {
   val mediaPlayer = new MediaPlayer(song.media)
   def play() = mediaPlayer.play()
   def pause() = mediaPlayer.pause()

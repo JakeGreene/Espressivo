@@ -20,4 +20,5 @@ trait SongController {
   def play()
   def pause()
   def stop()
+  def song: Song
 }
