@@ -31,7 +31,6 @@ class MusicPlayer extends Actor with FSM[State, Data] {
 
   when(Ready) {
     case Event(Play(song), Uninitialized) => {
-      println(s"Playing $song")
       val controller = song.createController()
       controller.play()
       goto(Playing) using CurrentSong(controller)
@@ -49,6 +48,14 @@ class MusicPlayer extends Actor with FSM[State, Data] {
         newController.play()
         stay using CurrentSong(newController)
       }
+    }
+    case Event(Stop, data: CurrentSong) => {
+      data.song.stop()
+      goto(Stopped) using data
+    }
+    case Event(Pause, data: CurrentSong) => {
+      data.song.pause()
+      goto(Paused) using data
     }
   }
 
