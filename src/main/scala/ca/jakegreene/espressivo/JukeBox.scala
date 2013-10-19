@@ -5,6 +5,7 @@ import scalafx.scene.media.MediaPlayer
 import scalafx.scene.media.Media
 import ca.jakegreene.espressivo.music.Song
 import ca.jakegreene.espressivo.music.SongController
+import akka.actor.Props
 
 case class SongId(id: Int)
 case class SongEntry(id: SongId, song: Song)
@@ -24,18 +25,10 @@ object JukeBox {
 
 class JukeBox(songLibrary: Map[SongId, Song]) extends Actor {
   import JukeBox._
-  var currentSong: Option[SongController] = None
+  val musicPlayer = context.actorOf(Props[MusicPlayer], "espressivo-player")
   def receive = {
-    case Play(song) => playSong(song)
+    case Play(song) => musicPlayer ! MusicPlayer.Play(songLibrary(song))
     case GetMusicLibrary => sender ! MusicLibrary(songLibrary.map(tuple => entry(tuple)))
     case GetSong(id) => sender ! SongEntry(id, songLibrary(id))
-  }
-  
-  private def playSong(id: SongId) {
-    if(currentSong.isDefined) currentSong.get.stop()
-    val song = songLibrary(id)
-    val controller = song.createController()
-    currentSong = Some(controller)
-    controller.play()
   }
 }
