@@ -68,6 +68,12 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
           player ! Stop
           BasicResponse("Stopping Media")
         }
+      } ~
+      path("pause") {
+        complete {
+          player ! Pause
+          BasicResponse("Paused Media")
+        }
       }
       
   def receive = runRoute(myRoute)
