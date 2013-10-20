@@ -70,6 +70,20 @@ class MusicPlayer extends Actor with FSM[State, Data] {
   }
 
   when(Paused) {
+    case Event(Play(song), CurrentSong(controller)) => {
+      if (song equals controller.song) {
+        controller.play()
+        goto(Playing) using CurrentSong(controller)
+      } else {
+        val newController = song.createController()
+        newController.play()
+        goto(Playing) using CurrentSong(newController)
+      }
+    }
+    case Event(Stop, CurrentSong(controller)) => {
+      controller.stop()
+      goto(Stopped) using NoSong
+    }
     case _ => stay
   }
 
