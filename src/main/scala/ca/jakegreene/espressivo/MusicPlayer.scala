@@ -18,6 +18,7 @@ object MusicPlayer {
   sealed trait Data
   case object Uninitialized extends Data
   case class CurrentSong(song: SongController) extends Data
+  case object NoSong extends Data
 
   sealed trait Request
   case class Play(song: Song)
@@ -51,7 +52,7 @@ class MusicPlayer extends Actor with FSM[State, Data] {
     }
     case Event(Stop, data: CurrentSong) => {
       data.song.stop()
-      goto(Stopped) using data
+      goto(Stopped) using NoSong
     }
     case Event(Pause, data: CurrentSong) => {
       data.song.pause()
@@ -60,6 +61,11 @@ class MusicPlayer extends Actor with FSM[State, Data] {
   }
 
   when(Stopped) {
+    case Event(Play(song), NoSong) => {
+      val controller = song.createController()
+      controller.play()
+      goto(Playing) using CurrentSong(controller)
+    }
     case _ => stay
   }
 

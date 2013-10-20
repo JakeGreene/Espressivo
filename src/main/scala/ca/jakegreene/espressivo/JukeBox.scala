@@ -13,6 +13,7 @@ case class SongEntry(id: SongId, song: Song)
 object JukeBox {
   sealed trait Request
   case class Play(song: SongId) extends Request
+  case object Stop extends Request
   case object GetMusicLibrary extends Request
   case class GetSong(id: SongId) extends Request
   sealed trait Response
@@ -28,6 +29,7 @@ class JukeBox(songLibrary: Map[SongId, Song]) extends Actor {
   val musicPlayer = context.actorOf(Props[MusicPlayer], "espressivo-player")
   def receive = {
     case Play(song) => musicPlayer ! MusicPlayer.Play(songLibrary(song))
+    case Stop => musicPlayer ! MusicPlayer.Stop
     case GetMusicLibrary => sender ! MusicLibrary(songLibrary.map(tuple => entry(tuple)))
     case GetSong(id) => sender ! SongEntry(id, songLibrary(id))
   }

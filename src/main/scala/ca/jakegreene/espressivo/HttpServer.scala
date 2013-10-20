@@ -62,6 +62,12 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
             BasicResponse("Media Playing")
           }
         }
+      } ~
+      path("stop") {
+        complete {
+          player ! Stop
+          BasicResponse("Stopping Media")
+        }
       }
       
   def receive = runRoute(myRoute)
