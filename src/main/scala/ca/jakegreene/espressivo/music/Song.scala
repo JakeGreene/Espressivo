@@ -7,7 +7,13 @@ import org.joda.time.Duration
  */
 trait Song {
   def duration: Duration
-  def title: String = metadata("title")
+  def title: String = {
+    try {
+      metadata("title")  
+    } catch {
+      case _:Throwable => "No Name"
+    }
+  }
   def metadata: Map[String, String]
   def createController(): SongController
 }
