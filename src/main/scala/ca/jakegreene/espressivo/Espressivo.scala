@@ -15,7 +15,6 @@ import java.net.URI
 
 object Espressivo extends JFXApp {
   implicit val system = ActorSystem("espressivo-system")
-  val songLocations = Stream[String]("/resources/keeper.mp3", "/resources/Sing, Sing, Sing (Newer).mp3")
   val songLibrary = loadMusic(new File("/home/jake/Music"))
   val musicPlayer = system.actorOf(Props(new JukeBox(songLibrary)), "espressivo-player")
   val service = system.actorOf(Props(new HttpServer(musicPlayer)), "espressivo-server")
