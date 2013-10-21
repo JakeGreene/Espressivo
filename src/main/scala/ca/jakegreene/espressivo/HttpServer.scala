@@ -44,7 +44,7 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
       path("songs") {
         get {
           complete {
-           (player ? GetMusicLibrary).mapTo[MusicLibrary].map(lib => lib.songs.map(entry => describe(entry)))
+           (player ? GetMusicLibrary).mapTo[Music].map(lib => lib.songs.map(entry => describe(entry)))
           }
         }
       } ~

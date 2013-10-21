@@ -13,6 +13,7 @@ import akka.util.Timeout
 import ca.jakegreene.espressivo.music.Song
 import scala.concurrent.Await
 import ca.jakegreene.espressivo.JukeBox._
+import ca.jakegreene.espressivo.music.MusicLibrary
 
 class JukeBoxSpec extends TestKit(ActorSystem("JukeBoxSpec")) with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar {
   
@@ -21,19 +22,19 @@ class JukeBoxSpec extends TestKit(ActorSystem("JukeBoxSpec")) with WordSpecLike 
   "A JukeBox" should {
     "provide the full library when queried" in {
       val libSize = 2
-      val songsById = createLibrary(libSize)
-      val jukebox = TestActorRef(new JukeBox(songsById))
-      val futureLibrary = (jukebox ? GetMusicLibrary).mapTo[MusicLibrary]
+      val lin = createLibrary(libSize)
+      val jukebox = TestActorRef(new JukeBox(lin))
+      val futureLibrary = (jukebox ? GetMusicLibrary).mapTo[Music]
       val returnedLibrary = Await.result(futureLibrary, 1 seconds)
       returnedLibrary.songs.size should be (libSize)
-      val songEntries = songsById.map(tuple => JukeBox.entry(tuple))
+      val songEntries = lin.entries
       returnedLibrary.songs should be (songEntries)
     }
     "provide a song when queried by ID" in {
       val libSize = 2
-      val songsById = createLibrary(libSize)
-      val jukebox = TestActorRef(new JukeBox(songsById))
-      val songEntries = songsById.map(tuple => JukeBox.entry(tuple))
+      val lib = createLibrary(libSize)
+      val jukebox = TestActorRef(new JukeBox(lib))
+      val songEntries = lib.entries
       for (i <- 1 to libSize) {
         val futureEntry = (jukebox ? GetSong(SongId(i))).mapTo[SongEntry]
         val entry = Await.result(futureEntry, 1 seconds)
@@ -42,11 +43,11 @@ class JukeBoxSpec extends TestKit(ActorSystem("JukeBoxSpec")) with WordSpecLike 
     }
   }
   
-  private def createLibrary(size: Int): Map[SongId, Song] = {
+  private def createLibrary(size: Int): MusicLibrary = {
     val tuples = for {
       id <- (1 to size)
       song = mock[Song]
     } yield (SongId(id) -> song)
-    return tuples.toMap
+    return MusicLibrary(tuples.toMap)
   }
 }
