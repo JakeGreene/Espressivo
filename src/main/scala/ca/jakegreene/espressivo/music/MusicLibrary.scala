@@ -1,10 +1,9 @@
 package ca.jakegreene.espressivo.music
 
-import ca.jakegreene.espressivo.SongId
 import java.io.File
-import scalafx.scene.media.Media
 import java.net.URI
-import ca.jakegreene.espressivo.SongEntry
+
+import scala.Array.canBuildFrom
 
 object MusicLibrary {
   def apply(lib: Map[SongId, Song]) = new MusicLibrary(lib)

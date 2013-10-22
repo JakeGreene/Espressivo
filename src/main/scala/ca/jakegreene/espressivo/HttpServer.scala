@@ -10,6 +10,10 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import reflect.ClassTag
 import ca.jakegreene.espressivo.music.Song
+import ca.jakegreene.espressivo.music.JukeBox
+import ca.jakegreene.espressivo.music.JukeBox.GetMusicLibrary
+import ca.jakegreene.espressivo.music.SongId
+import ca.jakegreene.espressivo.music.SongEntry
 
 case class BasicResponse(msg: String)
 

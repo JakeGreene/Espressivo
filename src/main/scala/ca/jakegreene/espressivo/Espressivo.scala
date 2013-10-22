@@ -13,6 +13,8 @@ import ca.jakegreene.espressivo.music.ScalafxSong
 import java.io.File
 import java.net.URI
 import ca.jakegreene.espressivo.music.MusicLibrary
+import ca.jakegreene.espressivo.music.ScalafxSong
+import ca.jakegreene.espressivo.music.JukeBox
 import ca.jakegreene.espressivo.settings.Settings
 
 object Espressivo extends JFXApp {

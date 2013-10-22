@@ -1,12 +1,7 @@
-package ca.jakegreene.espressivo
+package ca.jakegreene.espressivo.music
 
-import akka.actor.FSM
 import akka.actor.Actor
-import scalafx.scene.media.Media
-import scalafx.scene.media.MediaPlayer
-import ca.jakegreene.espressivo.music.SongController
-import ca.jakegreene.espressivo.music.Song
-import ca.jakegreene.espressivo.MusicPlayer._
+import akka.actor.FSM
 
 object MusicPlayer {
   sealed trait State
@@ -26,7 +21,7 @@ object MusicPlayer {
   case object Pause
 }
 
-class MusicPlayer extends Actor with FSM[State, Data] {
+class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
   import MusicPlayer._
   startWith(Ready, Uninitialized)
 

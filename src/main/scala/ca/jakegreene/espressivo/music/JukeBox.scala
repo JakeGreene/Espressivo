@@ -1,12 +1,8 @@
-package ca.jakegreene.espressivo
+package ca.jakegreene.espressivo.music
 
 import akka.actor.Actor
-import scalafx.scene.media.MediaPlayer
-import scalafx.scene.media.Media
-import ca.jakegreene.espressivo.music.Song
-import ca.jakegreene.espressivo.music.SongController
 import akka.actor.Props
-import ca.jakegreene.espressivo.music.MusicLibrary
+import akka.actor.actorRef2Scala
 
 case class SongId(id: Int)
 case class SongEntry(id: SongId, song: Song)
