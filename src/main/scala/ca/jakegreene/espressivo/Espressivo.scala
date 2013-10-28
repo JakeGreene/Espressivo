@@ -16,20 +16,20 @@ import ca.jakegreene.espressivo.music.MusicLibrary
 import ca.jakegreene.espressivo.music.ScalafxSong
 import ca.jakegreene.espressivo.music.JukeBox
 import ca.jakegreene.espressivo.settings.Settings
+import com.typesafe.config.ConfigFactory
 
 object Espressivo extends JFXApp {
   implicit val system = ActorSystem("espressivo-system")
-  val settings = Settings(system)
-  def fxCreator(uri: URI) = {
+  val userConfig = ConfigFactory.parseFile(new File(parameters.raw(0)))
+  val settings = Settings(system, userConfig)
+  private def fxCreator(uri: URI) = {
     val media = new Media(uri.toString)
     new ScalafxSong(media)
   }
-  val songLibrary = MusicLibrary.inDirectory(settings.MusicRoot, fxCreator)
+  val songLibrary = MusicLibrary.inDirectory(settings.musicRoot, fxCreator)
   val musicPlayer = system.actorOf(Props(new JukeBox(songLibrary)), "espressivo-player")
   val service = system.actorOf(Props(new HttpServer(musicPlayer)), "espressivo-server")
-  val host = "localhost"
-  val port = 8080
-  IO(Http) ! Http.Bind(service, interface = host, port = port)
+  IO(Http) ! Http.Bind(service, interface = settings.host, port = settings.port)
   
   stage = new JFXApp.PrimaryStage {
     title = "Espressivo"
