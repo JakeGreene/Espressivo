@@ -20,13 +20,13 @@ case class BasicResponse(msg: String)
 object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val responseFormat = jsonFormat1(BasicResponse)
   implicit val songIdFormat = jsonFormat1(SongId)
-  implicit val songDescFormat = jsonFormat2(SongDescription)
+  implicit val songDescFormat = jsonFormat4(SongDescription)
 }
 
-case class SongDescription(id: SongId, name: String)
+case class SongDescription(id: SongId, name: String, artist: String, album: String)
 
 object HttpServer {
-  def describe(entry: SongEntry): SongDescription = SongDescription(entry.id, entry.song.title)
+  def describe(entry: SongEntry): SongDescription = SongDescription(entry.id, entry.song.title, entry.song.artist, entry.song.album)
 }
 
 class HttpServer(player: ActorRef) extends Actor with HttpService {

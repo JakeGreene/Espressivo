@@ -14,6 +14,20 @@ trait Song {
       case _:Throwable => "No Name"
     }
   }
+  def album: String = {
+    try {
+      metadata("album")  
+    } catch {
+      case _:Throwable => "No Name"
+    }
+  }
+  def artist: String = {
+    try {
+      metadata("artist")  
+    } catch {
+      case _:Throwable => "No Name"
+    }
+  }
   def metadata: Map[String, String]
   def createController(): SongController
 }
