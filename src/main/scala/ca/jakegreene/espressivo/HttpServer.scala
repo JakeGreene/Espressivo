@@ -13,8 +13,6 @@ import ca.jakegreene.espressivo.music.Song
 import ca.jakegreene.espressivo.music.JukeBox
 import ca.jakegreene.espressivo.music.JukeBox.GetMusicLibrary
 import ca.jakegreene.espressivo.music.JukeBox.Playlist
-import ca.jakegreene.espressivo.music.JukeBox.Playlists
-import ca.jakegreene.espressivo.music.JukeBox.PlaylistId
 import ca.jakegreene.espressivo.music.SongId
 import ca.jakegreene.espressivo.music.SongEntry
 import scala.collection.immutable.ListSet
@@ -23,34 +21,12 @@ case class BasicResponse(msg: String)
 
 object IdImplicits {
    implicit def Int2SongId(num: Int) = SongId(num)
-   implicit def Int2PlaylistId(num: Int) = PlaylistId(num)
 }
 
 object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val responseFormat = jsonFormat1(BasicResponse)
   implicit val songIdFormat = jsonFormat1(SongId)
   implicit val songDescFormat = jsonFormat4(SongDescription)
-  implicit val playlistIdFormat = jsonFormat1(PlaylistId)
-  implicit object PlaylistFormat extends RootJsonFormat[Playlist] {
-    def write(p: Playlist) = JsObject(
-      "name" -> JsString(p.name),
-      "songs" -> JsArray(p.songs.map(id => JsNumber(id.id)))
-    )
-    
-    def read(value: JsValue) = {
-      value.asJsObject.getFields("name", "songs") match {
-        case Seq(JsString(name), JsArray(songs)) => {
-          val ids = songs.map(value => value match { 
-            case JsNumber(num) => SongId(num.intValue)
-            case _ => throw new DeserializationException("Expected a list of intereger IDs")
-          })
-          Playlist(name, ids) 
-        }
-        case _ => throw new DeserializationException("Expected Playlist(name, ids)")
-      }
-    }
-  }
-  implicit val playlistsFormat = jsonFormat1(Playlists)
 }
 
 case class SongDescription(id: SongId, name: String, artist: String, album: String)
@@ -108,25 +84,6 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
         complete {
           player ! Pause
           BasicResponse("Paused Media")
-        }
-      } ~
-      path("playlists") {
-        get {
-          complete((player ? GetPlaylists).mapTo[Playlists])
-        } ~
-        post {
-          entity(as[Playlist]) { playlist =>
-            complete {
-              (player ? StorePlaylist(playlist)).mapTo[Playlists]
-            }
-          }
-        }
-      } ~
-      path("playlists" / IntNumber) { num =>
-        get {
-          complete {
-            (player ? GetPlaylist(num)).mapTo[Playlist]
-          }
         }
       }
       
