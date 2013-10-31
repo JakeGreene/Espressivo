@@ -21,6 +21,11 @@ import scala.collection.immutable.ListSet
 
 case class BasicResponse(msg: String)
 
+object IdImplicits {
+   implicit def Int2SongId(num: Int) = SongId(num)
+   implicit def Int2PlaylistId(num: Int) = PlaylistId(num)
+}
+
 object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val responseFormat = jsonFormat1(BasicResponse)
   implicit val songIdFormat = jsonFormat1(SongId)
@@ -45,7 +50,6 @@ object MyJsonProtocol extends DefaultJsonProtocol {
       }
     }
   }
-  //implicit val playlistFormat = jsonFormat2(Playlist)
   implicit val playlistsFormat = jsonFormat1(Playlists)
 }
 
@@ -57,6 +61,7 @@ object HttpServer {
 
 class HttpServer(player: ActorRef) extends Actor with HttpService {
   import MyJsonProtocol._
+  import IdImplicits._
   import HttpServer._
   import JukeBox._
   import spray.httpx.SprayJsonSupport._
@@ -81,7 +86,7 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
       path("songs" / IntNumber) { songId =>
         get {
           complete {
-            (player ? GetSong(SongId(songId))).mapTo[SongEntry].map(entry => describe(entry))
+            (player ? GetSong(songId)).mapTo[SongEntry].map(entry => describe(entry))
           }
         }
       } ~
@@ -117,10 +122,10 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
           }
         }
       } ~
-      path("playlists" / IntNumber) { playlistId =>
+      path("playlists" / IntNumber) { num =>
         get {
           complete {
-            (player ? GetPlaylist(PlaylistId(playlistId))).mapTo[Playlist]
+            (player ? GetPlaylist(num)).mapTo[Playlist]
           }
         }
       }
