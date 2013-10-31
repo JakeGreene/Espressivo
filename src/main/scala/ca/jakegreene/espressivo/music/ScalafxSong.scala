@@ -22,4 +22,5 @@ class ScalafxSongController(val song: ScalafxSong) extends SongController {
   def play() = mediaPlayer.play()
   def pause() = mediaPlayer.pause()
   def stop() = mediaPlayer.stop()
+  def onSongEnd_=(op: => Unit) = { mediaPlayer.onEndOfMedia = op }
 }

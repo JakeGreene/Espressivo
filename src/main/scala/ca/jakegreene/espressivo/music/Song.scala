@@ -41,4 +41,5 @@ trait SongController {
   def pause()
   def stop()
   def song: Song
+  def onSongEnd_=(op: => Unit): Unit
 }
