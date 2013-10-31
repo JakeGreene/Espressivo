@@ -15,6 +15,7 @@ object JukeBox {
   case class Play(song: SongId) extends Request
   case object Stop extends Request
   case object Pause extends Request
+  case class Start(id: PlaylistId) extends Request
   case object GetMusicLibrary extends Request
   case class GetSong(id: SongId) extends Request
   case class StorePlaylist(playlist: Playlist) extends Request
@@ -45,5 +46,6 @@ class JukeBox(songLibrary: MusicLibrary) extends Actor {
     }
     case GetPlaylist(id) => sender ! playlists(id)
     case GetPlaylists => sender ! Playlists(playlists.values)
+    case Start(id) => 
   }
 }
