@@ -15,7 +15,7 @@ object MusicPlayer {
   case class CurrentSong(song: SongController) extends Data
   case object NoSong extends Data
 
-  sealed trait Request
+  private sealed trait Request
   case class Play(song: Song)
   case object Stop
   case object Pause
