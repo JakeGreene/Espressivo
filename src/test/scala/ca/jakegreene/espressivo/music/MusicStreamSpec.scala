@@ -14,7 +14,10 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
   "A MusicStream" should {
     // Transition from Ready
     "Ready -> Waiting given Activate with no songs to play" in {
-     fail()
+      val player = mock[ActorRef]
+      val stream = TestFSMRef(new MusicStream(player))
+      stream.receive(MusicStream.Activate)
+      stream.stateName should be (MusicStream.Waiting)
     }
     "move to Active if told to Activate while Ready and there are songs to play" in {
       fail()
