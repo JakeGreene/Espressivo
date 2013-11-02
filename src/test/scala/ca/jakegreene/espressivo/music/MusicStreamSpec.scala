@@ -9,8 +9,12 @@ import akka.actor.ActorSystem
 import akka.actor.ActorRef
 import akka.testkit.TestActorRef
 import akka.testkit.TestFSMRef
+import scala.concurrent.duration._
 
 class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordSpecLike with Matchers with BeforeAndAfterAll with MockitoSugar {
+  
+  implicit val timeout = Duration(1, SECONDS)
+  
   "A MusicStream" should {
     // Transition from Ready
     "Ready -> Waiting given Activate with no songs to play" in {
@@ -19,8 +23,12 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       stream.receive(MusicStream.Activate)
       stream.stateName should be (MusicStream.Waiting)
     }
-    "move to Active if told to Activate while Ready and there are songs to play" in {
-      fail()
+    "Ready -> Active given Activate with songs to play" in {
+      val player = mock[ActorRef]
+      val stream = TestFSMRef(new MusicStream(player))
+      stream.setState(MusicStream.Ready, MusicStream.Songs(None, None, Array() :+ mock[Song]), timeout, None)
+      stream.receive(MusicStream.Activate)
+      stream.stateName should be (MusicStream.Active)
     }
     "stay in Ready if told to Append" in {
       fail()
