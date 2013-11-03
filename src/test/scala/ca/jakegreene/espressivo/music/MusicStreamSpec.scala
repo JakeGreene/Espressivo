@@ -38,7 +38,10 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       stream.stateName should be (MusicStream.Ready)
     }
     "stay in Ready if told to Suspend" in {
-      fail()
+      val player = mock[ActorRef]
+      val stream = TestFSMRef(new MusicStream(player))
+      stream.receive(MusicStream.Suspend)
+      stream.stateName should be (MusicStream.Ready)
     }
     "stay in Ready if told a Song has finished" in {
       //This may result in an error
