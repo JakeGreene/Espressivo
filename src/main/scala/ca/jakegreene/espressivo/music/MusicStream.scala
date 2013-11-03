@@ -27,9 +27,10 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FS
   startWith(Ready, Songs(None, None, Array()))
   
   when(Ready) {
-    case Event(Activate, Songs(_, _, Array())) => {
-      goto (Waiting) using Songs(None, None, Array())
+    case Event(Activate, Songs(a, i, Array())) => {
+      goto (Waiting) using Songs(a, i, Array())
     }
+    case Event(Activate, Songs(a, i, songs)) if songs.length > 0 => goto (Active) using Songs(a, i, songs)
     case msg => stay
   }
   
