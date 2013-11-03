@@ -41,7 +41,12 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FS
   }
   
   when(Waiting) {
-    case Event(Append(song), Songs(Nil)) => goto(Active) using Songs(song :: Nil) 
+    case Event(Append(song), Songs(Nil)) => goto(Active) using Songs(song :: Nil)
+    case Event(Suspend, Songs(Nil)) => goto(Suspended)
+    case _ => stay
+  }
+  
+  when(Suspended) {
     case _ => stay
   }
   

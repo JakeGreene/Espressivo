@@ -61,7 +61,7 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       val stream = TestFSMRef(new MusicStream(player))
       stream.setState(MusicStream.Waiting, MusicStream.Songs(List()), timeout, None)
       stream.receive(MusicStream.Suspend)
-      stream.stateName should be (MusicStream.Suspend)
+      stream.stateName should be (MusicStream.Suspended)
     }
     "stay in Waiting if told to Activate" in {
       val player = mock[ActorRef]
