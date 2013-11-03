@@ -19,19 +19,19 @@ object MusicStream {
   case object Waiting extends State
   
   sealed trait Data
-  case class Songs(active: Option[Song], index: Option[Int], songs: Array[Song]) extends Data
+  case class Songs(newestFirst: List[Song]) extends Data
 }
 
 import MusicStream._
 class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FSM[State, Data] {
-  startWith(Ready, Songs(None, None, Array()))
+  startWith(Ready, Songs(Nil))
   
   when(Ready) {
-    case Event(Activate, Songs(a, i, Array())) => {
-      goto (Waiting) using Songs(a, i, Array())
+    case Event(Activate, Songs(Nil)) => {
+      goto (Waiting) using Songs(Nil)
     }
-    case Event(Activate, Songs(a, i, songs)) if songs.length > 0 => goto (Active) using Songs(a, i, songs)
-    case Event(Append(song), Songs(a, i, songs)) => stay using Songs(a, i, songs :+ song)
+    case Event(Activate, Songs(songs)) if songs.length > 0 => goto (Active) using Songs(songs)
+    case Event(Append(song), Songs(songs)) => stay using Songs(song +: songs) // Newest song at the head of the list
     case msg => stay
   }
   

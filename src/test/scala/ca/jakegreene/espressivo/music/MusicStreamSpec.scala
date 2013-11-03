@@ -26,7 +26,7 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
     "Ready -> Active given Activate with songs to play" in {
       val player = mock[ActorRef]
       val stream = TestFSMRef(new MusicStream(player))
-      stream.setState(MusicStream.Ready, MusicStream.Songs(None, None, Array() :+ mock[Song]), timeout, None)
+      stream.setState(MusicStream.Ready, MusicStream.Songs(List(mock[Song])), timeout, None)
       stream.receive(MusicStream.Activate)
       stream.stateName should be (MusicStream.Active)
     }
