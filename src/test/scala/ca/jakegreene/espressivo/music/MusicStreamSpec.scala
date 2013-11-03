@@ -49,16 +49,29 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
     }
     // Transition from Waiting
     "move to Active if told to Append while in Waiting" in {
-      fail()
+      val player = mock[ActorRef]
+      val stream = TestFSMRef(new MusicStream(player))
+      val song = mock[Song]
+      stream.setState(MusicStream.Waiting, MusicStream.Songs(List()), timeout, None)
+      stream.receive(MusicStream.Append(song))
+      stream.stateName should be (MusicStream.Active)
     }
     "move to Suspended if told to Suspend while in Waiting" in {
-      fail()
+      val player = mock[ActorRef]
+      val stream = TestFSMRef(new MusicStream(player))
+      stream.setState(MusicStream.Waiting, MusicStream.Songs(List()), timeout, None)
+      stream.receive(MusicStream.Suspend)
+      stream.stateName should be (MusicStream.Suspend)
     }
     "stay in Waiting if told to Activate" in {
-      fail()
+      val player = mock[ActorRef]
+      val stream = TestFSMRef(new MusicStream(player))
+      stream.setState(MusicStream.Waiting, MusicStream.Songs(List()), timeout, None)
+      stream.receive(MusicStream.Activate)
+      stream.stateName should be (MusicStream.Waiting)
     }
     "stay in Waiting if told a Song has finished" in {
-     fail()
+      fail()
     }
     // Transition from Active
     "stay in Active if told to Append" in {
