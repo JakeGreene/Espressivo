@@ -15,10 +15,13 @@ object MusicPlayer {
   case class CurrentSong(song: SongController) extends Data
   case object NoSong extends Data
 
-  private sealed trait Request
-  case class Play(song: Song)
-  case object Stop
-  case object Pause
+  sealed trait Request
+  case class Play(song: Song) extends Request
+  case object Stop extends Request
+  case object Pause extends Request
+  
+  sealed trait Output
+  case class SongFinished(song: Song) extends Output
 }
 
 class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
