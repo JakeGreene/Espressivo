@@ -44,8 +44,11 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       stream.stateName should be (MusicStream.Ready)
     }
     "stay in Ready given a Song has finished" in {
-      //This may result in an error
-      fail()
+      val player = mock[ActorRef]
+      val stream = TestFSMRef(new MusicStream(player))
+      val song = mock[Song]
+      stream.receive(MusicPlayer.SongFinished(song))
+      stream.stateName should be (MusicStream.Ready)
     }
     // Transition from Waiting
     "Waiting -> Active given Append" in {
