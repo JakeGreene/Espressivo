@@ -41,6 +41,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FS
     case Event(Append(song), Songs(newestFirst)) => stay using Songs(song +: newestFirst)
     case Event(Activate, _) => stay
     case Event(Suspend, _) => goto(Suspended)
+    case Event(MusicPlayer.SongFinished(song), Songs(s :: Nil)) => goto(Waiting) using Songs(Nil)
     case Event(MusicPlayer.SongFinished(song), Songs(newestFirst)) => stay using Songs(newestFirst.take(newestFirst.length - 1))
     case _ => stay
   }
