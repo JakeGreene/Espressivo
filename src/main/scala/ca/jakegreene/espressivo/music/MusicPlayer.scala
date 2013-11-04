@@ -13,7 +13,6 @@ object MusicPlayer {
   sealed trait Data
   case object Uninitialized extends Data
   case class CurrentSong(song: SongController) extends Data
-  case object NoSong extends Data
 
   sealed trait Request
   case class Play(song: Song) extends Request
@@ -27,6 +26,19 @@ object MusicPlayer {
 class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
   import MusicPlayer._
   startWith(Ready, Uninitialized)
+  
+  private def playSong(song: Song, currentController: SongController): MusicPlayer.this.State = {
+    if (currentController.song equals song) {
+      currentController.play()
+      goto(Playing) using CurrentSong(currentController)
+    }
+    else {
+      currentController.stop()
+      val newController = song.createController()
+      newController.play()
+      goto(Playing) using CurrentSong(newController)
+    }
+  }
 
   when(Ready) {
     case Event(Play(song), Uninitialized) => {
@@ -38,19 +50,11 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
 
   when(Playing) {
     case Event(Play(newSong), CurrentSong(oldSongController)) => {
-      // Trying to Play the current song should not restart it
-      if (newSong equals oldSongController.song) {
-        stay
-      } else {
-        oldSongController.stop()
-        val newController = newSong.createController()
-        newController.play()
-        stay using CurrentSong(newController)
-      }
+      playSong(newSong, oldSongController)
     }
     case Event(Stop, data: CurrentSong) => {
       data.song.stop()
-      goto(Stopped) using NoSong
+      goto(Stopped)
     }
     case Event(Pause, data: CurrentSong) => {
       data.song.pause()
@@ -59,28 +63,19 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
   }
 
   when(Stopped) {
-    case Event(Play(song), NoSong) => {
-      val controller = song.createController()
-      controller.play()
-      goto(Playing) using CurrentSong(controller)
+    case Event(Play(song), CurrentSong(oldController)) => {
+      playSong(song, oldController)
     }
     case _ => stay
   }
 
   when(Paused) {
     case Event(Play(song), CurrentSong(controller)) => {
-      if (song equals controller.song) {
-        controller.play()
-        goto(Playing) using CurrentSong(controller)
-      } else {
-        val newController = song.createController()
-        newController.play()
-        goto(Playing) using CurrentSong(newController)
-      }
+      playSong(song, controller)
     }
     case Event(Stop, CurrentSong(controller)) => {
       controller.stop()
-      goto(Stopped) using NoSong
+      goto(Stopped)
     }
     case _ => stay
   }

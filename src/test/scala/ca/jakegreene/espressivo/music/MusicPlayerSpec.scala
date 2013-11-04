@@ -80,19 +80,22 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	  }
 	  // MusicPlayer.Stopped State Transition tests
 	  "play a new song when told to Play in Stopped" in {
-	    val musicFsm = prepareStoppedPlayer()
-	    val (song , controller) = prepareSongAndController()
+	    val (_ , controller) = prepareSongAndController()
+	    val musicFsm = prepareStoppedPlayer(controller)
+	    val (song , newController) = prepareSongAndController()
 	    musicFsm ! MusicPlayer.Play(song)
 	    expectMsg(Transition(musicFsm, Stopped, Playing))
-	    verify(controller, times(1)).play()
+	    verify(newController, times(1)).play()
 	  }
 	  "do nothing when given Stop in Stopped" in {
-	    val musicFsm = prepareStoppedPlayer()
+	    val (_ , controller) = prepareSongAndController()
+	    val musicFsm = prepareStoppedPlayer(controller)
 	    musicFsm ! MusicPlayer.Stop
 	    assert(musicFsm.stateName equals MusicPlayer.Stopped)
 	  }
 	  "do nothing when given Pause in Stopped" in {
-	    val musicFsm = prepareStoppedPlayer()
+	    val (_ , controller) = prepareSongAndController()
+	    val musicFsm = prepareStoppedPlayer(controller)
 	    musicFsm ! MusicPlayer.Pause
 	    assert(musicFsm.stateName equals MusicPlayer.Stopped)
 	  }
@@ -150,11 +153,10 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	  return fsmRef
 	}
 	
-	private def prepareStoppedPlayer(): TestFSMRef[State, Data, MusicPlayer] = {
-	  val fsmRef = TestFSMRef(new MusicPlayer)
-	  fsmRef ! SubscribeTransitionCallBack(self)
-	  expectMsg(CurrentState(fsmRef, Ready))
-	  fsmRef.setState(Stopped, NoSong, 1 second, None)
+	private def prepareStoppedPlayer(controller: SongController): TestFSMRef[State, Data, MusicPlayer] = {
+	  val fsmRef = prepareFsmMusicPlayer()
+	  controller.stop()
+	  fsmRef.setState(Stopped, CurrentSong(controller), 1 second, None)
 	  expectMsg(Transition(fsmRef, Ready, Stopped))
 	  return fsmRef
 	}
