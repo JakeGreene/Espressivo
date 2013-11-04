@@ -51,6 +51,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FS
   }
   
   when(Suspended) {
+    case Event(Suspend, _) => stay
     case _ => stay
   }
   
