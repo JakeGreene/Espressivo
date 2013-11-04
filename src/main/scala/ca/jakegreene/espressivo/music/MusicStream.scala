@@ -37,6 +37,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FS
   }
   
   when(Active) {
+    case Event(Append(song), Songs(newestFirst)) => stay using Songs(song +: newestFirst)
     case _ => stay
   }
   
