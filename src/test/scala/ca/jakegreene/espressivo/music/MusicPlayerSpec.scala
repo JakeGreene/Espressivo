@@ -110,7 +110,7 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	    val (song , controller) = prepareSongAndController()
 	    val musicFsm = prepareStoppedPlayer(controller)
 	    musicFsm ! MusicPlayer.SongFinished(song)
-	    expectMsg(Transition(musicFsm, Playing, Ready))
+	    expectMsg(Transition(musicFsm, Stopped, Ready))
 	  }
 	  // MusicPlayer.Paused State Transition tests
 	  "resume a paused song when given Play(current song) in Paused" in {
@@ -147,7 +147,7 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	    val (song , controller) = prepareSongAndController()
 	    val musicFsm = preparePausedPlayer(controller)
 	    musicFsm ! MusicPlayer.SongFinished(song)
-	    expectMsg(Transition(musicFsm, Playing, Ready))
+	    expectMsg(Transition(musicFsm, Paused, Ready))
 	  }
 	}
 	

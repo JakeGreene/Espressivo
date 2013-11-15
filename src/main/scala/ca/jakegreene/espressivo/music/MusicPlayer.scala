@@ -67,12 +67,14 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
       data.controller.pause()
       goto(Paused) using data
     }
+    case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => goto(Ready) using NoSong
   }
 
   when(Stopped) {
     case Event(Play(song), CurrentSong(oldController)) => {
       playSong(song, oldController)
     }
+    case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => goto(Ready) using NoSong
     case _ => stay
   }
 
@@ -84,6 +86,7 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
       controller.stop()
       goto(Stopped)
     }
+    case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => goto(Ready) using NoSong
     case _ => stay
   }
 
