@@ -36,11 +36,15 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
     }
     else {
       currentController.stop()
-      val newController = song.createController()
+      playNewSong(song)
+    }
+  }
+  
+  private def playNewSong(song: Song): MusicPlayer.this.State = {
+     val newController = song.createController()
       newController.onSongEnd(tellSongFinished(self))
       newController.play()
       goto(Playing) using CurrentSong(newController)
-    }
   }
   
   private def tellSongFinished(actor: ActorRef)(song: Song) {
@@ -49,9 +53,7 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
 
   when(Ready) {
     case Event(Play(song), _) => {
-      val controller = song.createController()
-      controller.play()
-      goto(Playing) using CurrentSong(controller)
+      playNewSong(song)
     }
   }
 
