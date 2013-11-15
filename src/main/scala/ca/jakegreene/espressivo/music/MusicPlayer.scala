@@ -2,6 +2,7 @@ package ca.jakegreene.espressivo.music
 
 import akka.actor.Actor
 import akka.actor.FSM
+import akka.actor.ActorRef
 
 object MusicPlayer {
   sealed trait State
@@ -12,7 +13,8 @@ object MusicPlayer {
 
   sealed trait Data
   case object Uninitialized extends Data
-  case class CurrentSong(song: SongController) extends Data
+  case class CurrentSong(controller: SongController) extends Data
+  case object NoSong extends Data
 
   sealed trait Request
   case class Play(song: Song) extends Request
@@ -35,13 +37,18 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
     else {
       currentController.stop()
       val newController = song.createController()
+      newController.onSongEnd(tellSongFinished(self))
       newController.play()
       goto(Playing) using CurrentSong(newController)
     }
   }
+  
+  private def tellSongFinished(actor: ActorRef)(song: Song) {
+    actor ! SongFinished(song)
+  }
 
   when(Ready) {
-    case Event(Play(song), Uninitialized) => {
+    case Event(Play(song), _) => {
       val controller = song.createController()
       controller.play()
       goto(Playing) using CurrentSong(controller)
@@ -53,11 +60,11 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
       playSong(newSong, oldSongController)
     }
     case Event(Stop, data: CurrentSong) => {
-      data.song.stop()
+      data.controller.stop()
       goto(Stopped)
     }
     case Event(Pause, data: CurrentSong) => {
-      data.song.pause()
+      data.controller.pause()
       goto(Paused) using data
     }
   }

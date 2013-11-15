@@ -22,5 +22,5 @@ class ScalafxSongController(val song: ScalafxSong) extends SongController {
   def play() = mediaPlayer.play()
   def pause() = mediaPlayer.pause()
   def stop() = mediaPlayer.stop()
-  def onSongEnd_=(op: => Unit) = { mediaPlayer.onEndOfMedia = op }
+  def onSongEnd(op: Song => Unit) = { mediaPlayer.onEndOfMedia = op(song) } // execution of op(song) will be delayed until the song ends
 }
