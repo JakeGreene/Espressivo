@@ -3,6 +3,7 @@ package ca.jakegreene.espressivo.music
 import akka.actor.Actor
 import akka.actor.FSM
 import akka.actor.ActorRef
+import akka.actor.ActorLogging
 
 object MusicPlayer {
   sealed trait State
@@ -23,9 +24,10 @@ object MusicPlayer {
   
   sealed trait Output
   case class SongFinished(song: Song) extends Output
+  
 }
 
-class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
+class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] with ActorLogging {
   import MusicPlayer._
   startWith(Ready, Uninitialized)
   
@@ -69,15 +71,12 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
       data.controller.pause()
       goto(Paused) using data
     }
-    case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => goto(Ready) using NoSong
   }
 
   when(Stopped) {
     case Event(Play(song), CurrentSong(oldController)) => {
       playSong(song, oldController)
     }
-    case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => goto(Ready) using NoSong
-    case _ => stay
   }
 
   when(Paused) {
@@ -88,8 +87,14 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] {
       controller.stop()
       goto(Stopped)
     }
+  }
+  
+  whenUnhandled {
     case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => goto(Ready) using NoSong
-    case _ => stay
+    case Event(msg, state) => {
+      log.warning(s"Unhandled Event: Received $msg with $state while ${this.stateName}")
+      stay
+    }
   }
 
   initialize
