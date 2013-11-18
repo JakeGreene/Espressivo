@@ -12,7 +12,6 @@ import reflect.ClassTag
 import ca.jakegreene.espressivo.music.Song
 import ca.jakegreene.espressivo.music.JukeBox
 import ca.jakegreene.espressivo.music.JukeBox.GetMusicLibrary
-import ca.jakegreene.espressivo.music.JukeBox.Playlist
 import ca.jakegreene.espressivo.music.SongId
 import ca.jakegreene.espressivo.music.SongEntry
 import scala.collection.immutable.ListSet
@@ -64,26 +63,6 @@ class HttpServer(player: ActorRef) extends Actor with HttpService {
           complete {
             (player ? GetSong(songId)).mapTo[SongEntry].map(entry => describe(entry))
           }
-        }
-      } ~
-      path("play" / IntNumber) { songId =>
-        get {
-          complete {
-            player ! Play(SongId(songId))
-            BasicResponse("Media Playing")
-          }
-        }
-      } ~
-      path("stop") {
-        complete {
-          player ! Stop
-          BasicResponse("Stopping Media")
-        }
-      } ~
-      path("pause") {
-        complete {
-          player ! Pause
-          BasicResponse("Paused Media")
         }
       }
       
