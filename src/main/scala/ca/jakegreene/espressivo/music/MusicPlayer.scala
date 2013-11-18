@@ -77,6 +77,7 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] wi
     case Event(Play(song), CurrentSong(oldController)) => {
       playSong(song, oldController)
     }
+    case Event(msg: Request, _) => stay
   }
 
   when(Paused) {
@@ -87,6 +88,7 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] wi
       controller.stop()
       goto(Stopped)
     }
+    case Event(msg: Request, _) => stay
   }
   
   whenUnhandled {
