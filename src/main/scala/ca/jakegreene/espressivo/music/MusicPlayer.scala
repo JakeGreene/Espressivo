@@ -4,6 +4,7 @@ import akka.actor.Actor
 import akka.actor.FSM
 import akka.actor.ActorRef
 import akka.actor.ActorLogging
+import scala.collection.mutable.ListBuffer
 
 object MusicPlayer {
   sealed trait State
@@ -25,34 +26,14 @@ object MusicPlayer {
   sealed trait Output
   case class SongFinished(song: Song) extends Output
   
+  case class ListenForSongEnd(listener: ActorRef)
+  
 }
 
 class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] with ActorLogging {
   import MusicPlayer._
   startWith(Ready, Uninitialized)
   
-  private def playSong(song: Song, currentController: SongController): MusicPlayer.this.State = {
-    if (currentController.song equals song) {
-      currentController.play()
-      goto(Playing) using CurrentSong(currentController)
-    }
-    else {
-      currentController.stop()
-      playNewSong(song)
-    }
-  }
-  
-  private def playNewSong(song: Song): MusicPlayer.this.State = {
-     val newController = song.createController()
-      newController.onSongEnd(tellSongFinished(self))
-      newController.play()
-      goto(Playing) using CurrentSong(newController)
-  }
-  
-  private def tellSongFinished(actor: ActorRef)(song: Song) {
-    actor ! SongFinished(song)
-  }
-
   when(Ready) {
     case Event(Play(song), _) => {
       playNewSong(song)
@@ -91,12 +72,42 @@ class MusicPlayer extends Actor with FSM[MusicPlayer.State, MusicPlayer.Data] wi
     case Event(msg: Request, _) => stay
   }
   
+  val songEndListeners: ListBuffer[ActorRef] = new ListBuffer()
   whenUnhandled {
-    case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => goto(Ready) using NoSong
+    case Event(SongFinished(song), CurrentSong(controller)) if song equals controller.song => {
+      songEndListeners.foreach(listener => tellSongFinished(listener)(song))
+      goto(Ready) using NoSong
+    }
+    case Event(ListenForSongEnd(listener), _) => {
+      songEndListeners += listener
+      stay
+    }
     case Event(msg, state) => {
       log.warning(s"Unhandled Event: Received $msg with $state while ${this.stateName}")
       stay
     }
+  }
+    
+  private def playSong(song: Song, currentController: SongController): MusicPlayer.this.State = {
+    if (currentController.song equals song) {
+      currentController.play()
+      goto(Playing) using CurrentSong(currentController)
+    }
+    else {
+      currentController.stop()
+      playNewSong(song)
+    }
+  }
+  
+  private def playNewSong(song: Song): MusicPlayer.this.State = {
+     val newController = song.createController()
+      newController.onSongEnd(tellSongFinished(self))
+      newController.play()
+      goto(Playing) using CurrentSong(newController)
+  }
+  
+  private def tellSongFinished(actor: ActorRef)(song: Song) {
+    actor ! SongFinished(song)
   }
 
   initialize

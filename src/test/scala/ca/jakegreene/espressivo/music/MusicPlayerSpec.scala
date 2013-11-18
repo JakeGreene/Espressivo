@@ -16,6 +16,7 @@ import akka.testkit.TestActorRef
 import akka.testkit.TestFSMRef
 import akka.testkit.TestKit
 import ca.jakegreene.espressivo.music.MusicPlayer._
+import akka.actor.ActorRef
 
 class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordSpecLike with Matchers with ImplicitSender with MockitoSugar {
 	"A MusicPlayer" should {
@@ -26,6 +27,12 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	    musicPlayerRef ! MusicPlayer.Play(song)
 	    expectMsg(Transition(musicPlayerRef, Ready, Playing))
 	    verify(controller, times(1)).play()
+	  }
+	  "reigster a listener while in Ready" in {
+	    val musicFsm = prepareFsmMusicPlayer()
+	    val actor = mock[ActorRef]	    		
+	    musicFsm ! MusicPlayer.ListenForSongEnd(actor)
+	    musicFsm.stateName should be (MusicPlayer.Ready)
 	  }
 	  // MusicPlayer.Playing State Transition tests
 	  "stop playing a song when given another song to play" in {
@@ -85,6 +92,13 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	    musicFsm ! MusicPlayer.SongFinished(song)
 	    expectMsg(Transition(musicFsm, Playing, Ready))
 	  }
+	  "reigster a listener while in Playing" in {
+	    val (song , controller) = prepareSongAndController()
+	    val musicFsm = preparePlayingPlayer(controller)
+	    val actor = mock[ActorRef]	    		
+	    musicFsm ! MusicPlayer.ListenForSongEnd(actor)
+	    musicFsm.stateName should be (MusicPlayer.Playing)
+	  }
 	  // MusicPlayer.Stopped State Transition tests
 	  "play a new song when told to Play in Stopped" in {
 	    val (_ , controller) = prepareSongAndController()
@@ -111,6 +125,13 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	    val musicFsm = prepareStoppedPlayer(controller)
 	    musicFsm ! MusicPlayer.SongFinished(song)
 	    expectMsg(Transition(musicFsm, Stopped, Ready))
+	  }
+	  "reigster a listener while in Stopped" in {
+	    val (song , controller) = prepareSongAndController()
+	    val musicFsm = prepareStoppedPlayer(controller)
+	    val actor = mock[ActorRef]	    		
+	    musicFsm ! MusicPlayer.ListenForSongEnd(actor)
+	    musicFsm.stateName should be (MusicPlayer.Stopped)
 	  }
 	  // MusicPlayer.Paused State Transition tests
 	  "resume a paused song when given Play(current song) in Paused" in {
@@ -148,6 +169,13 @@ class MusicPlayerSpec extends TestKit(ActorSystem("MusicPlayerSpec")) with WordS
 	    val musicFsm = preparePausedPlayer(controller)
 	    musicFsm ! MusicPlayer.SongFinished(song)
 	    expectMsg(Transition(musicFsm, Paused, Ready))
+	  }
+	  "reigster a listener while in Paused" in {
+	    val (song , controller) = prepareSongAndController()
+	    val musicFsm = preparePausedPlayer(controller)
+	    val actor = mock[ActorRef]	    		
+	    musicFsm ! MusicPlayer.ListenForSongEnd(actor)
+	    musicFsm.stateName should be (MusicPlayer.Paused)
 	  }
 	}
 	
