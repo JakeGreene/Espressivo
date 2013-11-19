@@ -25,17 +25,17 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
     }
     "Ready -> Active given Activate with songs to play" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
-      stream.setState(MusicStream.Ready, MusicStream.Songs(List(song), None), timeout, None)
+      val songEntry = mockSongEntry(SongId(0))
+      stream.setState(MusicStream.Ready, MusicStream.Songs(List(songEntry), None), timeout, None)
       stream.receive(MusicStream.Activate)
       stream.stateName should be (MusicStream.Active)
       probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
-      probe.expectMsg(MusicPlayer.Play(song))
+      probe.expectMsg(MusicPlayer.Play(songEntry.song))
     }
     "stay in Ready given Append" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
-      stream.receive(MusicStream.Append(song))
+      val songEntry = mockSongEntry(SongId(0))
+      stream.receive(MusicStream.Append(songEntry))
       stream.stateName should be (MusicStream.Ready)
     }
     "stay in Ready given Suspend" in {
@@ -45,19 +45,19 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
     }
     "stay in Ready given a Song has finished" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
-      stream.receive(MusicPlayer.SongFinished(song))
+      val songEntry = mockSongEntry(SongId(0))
+      stream.receive(MusicPlayer.SongFinished(songEntry.song))
       stream.stateName should be (MusicStream.Ready)
     }
     // Transition from Waiting
     "Waiting -> Active given Append" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
+      val songEntry = mockSongEntry(SongId(0))
       stream.setState(MusicStream.Waiting, MusicStream.Songs(List(), None), timeout, None)
-      stream.receive(MusicStream.Append(song))
+      stream.receive(MusicStream.Append(songEntry))
       stream.stateName should be (MusicStream.Active)
       probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
-      probe.expectMsg(MusicPlayer.Play(song))
+      probe.expectMsg(MusicPlayer.Play(songEntry.song))
     }
     "Waiting -> Suspended given Suspend" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
@@ -74,51 +74,49 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
     "stay in Waiting given a Song has finished" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
       stream.setState(MusicStream.Waiting, MusicStream.Songs(List(), None), timeout, None)
-      val song = mock[Song]
-      stream.receive(MusicPlayer.SongFinished(song))
+      val songEntry = mockSongEntry(SongId(0))
+      stream.receive(MusicPlayer.SongFinished(songEntry.song))
       stream.stateName should be (MusicStream.Waiting)
     }
     // Transition from Active
     "stay in Active given Append" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
-      val currentSong = mock[Song]
-      stream.setState(MusicStream.Active, MusicStream.Songs(List(song), Some(currentSong)), timeout, None)
-      val newSong = mock[Song]
-      stream.receive(MusicStream.Append(newSong))
+      val currentSongEntry = mockSongEntry(SongId(1))
+      stream.setState(MusicStream.Active, MusicStream.Songs(List(), Some(currentSongEntry)), timeout, None)
+      val newSongEntry = mockSongEntry(SongId(2))
+      stream.receive(MusicStream.Append(newSongEntry))
       stream.stateName should be (MusicStream.Active)
     }
     "stay in Active given Activate" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
-      val currentSong = mock[Song]
-      stream.setState(MusicStream.Active, MusicStream.Songs(List(song), Some(currentSong)), timeout, None)
+      val songEntry = mockSongEntry(SongId(0))
+      val currentSongEntry = mockSongEntry(SongId(1))
+      stream.setState(MusicStream.Active, MusicStream.Songs(List(songEntry), Some(currentSongEntry)), timeout, None)
       stream.receive(MusicStream.Activate)
       stream.stateName should be (MusicStream.Active)
     }
     "Active -> Suspended given Suspend" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
-      val currentSong = mock[Song]
-      stream.setState(MusicStream.Active, MusicStream.Songs(List(song), Some(currentSong)), timeout, None)
+      val currentSongEntry = mockSongEntry(SongId(0))
+      stream.setState(MusicStream.Active, MusicStream.Songs(List(), Some(currentSongEntry)), timeout, None)
       stream.receive(MusicStream.Suspend)
       stream.stateName should be (MusicStream.Suspended)
     }
     "stay in Active if told a Song is finished and there are more songs" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val playingSong = mock[Song]
-      val nextSong = mock[Song]
+      val playingSong = mockSongEntry(SongId(1))
+      val nextSong = mockSongEntry(SongId(0))
       stream.setState(MusicStream.Active, MusicStream.Songs(List(nextSong), Some(playingSong)), timeout, None)
-      stream.receive(MusicPlayer.SongFinished(playingSong))
+      stream.receive(MusicPlayer.SongFinished(playingSong.song))
       stream.stateName should be (MusicStream.Active)
       probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
-      probe.expectMsg(MusicPlayer.Play(nextSong))
+      probe.expectMsg(MusicPlayer.Play(nextSong.song))
     }
     "move to Waiting if told a Song is finished and there are no more songs" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val playingSong = mock[Song]
+      val playingSong = mockSongEntry(SongId(0))
       stream.setState(MusicStream.Active, MusicStream.Songs(List(), Some(playingSong)), timeout, None)
-      stream.receive(MusicPlayer.SongFinished(playingSong))
+      stream.receive(MusicPlayer.SongFinished(playingSong.song))
       stream.stateName should be (MusicStream.Waiting)
     }
     // Transition from Suspended
@@ -131,18 +129,18 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
     "stay in Suspended given Append" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
       stream.setState(MusicStream.Suspended, MusicStream.Songs(Nil, None), timeout, None)
-      val song = mock[Song]
-      stream.receive(MusicStream.Append(song))
+      val songEntry = mockSongEntry(SongId(0))
+      stream.receive(MusicStream.Append(songEntry))
       stream.stateName should be (MusicStream.Suspended)
     }
     "Suspended -> Active given Activate with a song to play" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
-      val song = mock[Song]
-      stream.setState(MusicStream.Suspended, MusicStream.Songs(List(song), None), timeout, None)
+      val songEntry = mockSongEntry(SongId(0))
+      stream.setState(MusicStream.Suspended, MusicStream.Songs(List(songEntry), None), timeout, None)
       stream.receive(MusicStream.Activate)
       stream.stateName should be (MusicStream.Active)
       probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
-      probe.expectMsg(MusicPlayer.Play(song))
+      probe.expectMsg(MusicPlayer.Play(songEntry.song))
     }
     "Suspended -> Waiting given Activate with no song to play" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
@@ -164,5 +162,10 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
     val player = probe.ref
     val stream = TestFSMRef(new MusicStream(player))
     (stream, player, probe)
+  }
+  
+  private def mockSongEntry(id: SongId): SongEntry = {
+    val song = mock[Song]
+    SongEntry(id, song)
   }
 }

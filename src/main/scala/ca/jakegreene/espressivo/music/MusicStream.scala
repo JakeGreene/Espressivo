@@ -6,11 +6,14 @@ import scala.collection.mutable.ListBuffer
 import akka.actor.ActorLogging
 import akka.actor.FSM
 
+import MusicStream._
+import akka.actor.LoggingFSM
+
 object MusicStream {
   sealed trait Request
   case object Activate extends Request
   case object Suspend extends Request
-  case class Append(song: Song) extends Request
+  case class Append(song: SongEntry) extends Request
   
   sealed trait State
   case object Ready extends State
@@ -19,20 +22,18 @@ object MusicStream {
   case object Waiting extends State
   
   sealed trait Data
-  case class Songs(newestFirst: List[Song], current: Option[Song]) extends Data
+  case class Songs(newestFirst: List[SongEntry], current: Option[SongEntry]) extends Data
 }
-
-import MusicStream._
-class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FSM[State, Data] {
+class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with LoggingFSM[State, Data] {
   
   musicPlayer ! MusicPlayer.ListenForSongEnd(self)
   startWith(Ready, Songs(Nil, None))
   
   when(Ready) {
     case Event(Activate, Songs(Nil, None)) => goto (Waiting) using Songs(Nil, None)
-    case Event(Activate, Songs(song :: rest, None)) => {
-      musicPlayer ! MusicPlayer.Play(song)
-      goto (Active) using Songs(rest, Some(song))
+    case Event(Activate, Songs(songEntry :: rest, None)) => {
+      musicPlayer ! MusicPlayer.Play(songEntry.song)
+      goto (Active) using Songs(rest, Some(songEntry))
     }
     case Event(Append(song), Songs(songs, None)) => stay using Songs(song +: songs, None) // Newest song at the head of the list
     case Event(Suspend, _) => stay
@@ -44,18 +45,18 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FS
     case Event(Append(song), Songs(newestFirst, None)) => stay using Songs(song +: newestFirst, None)
     case Event(Activate, _) => stay
     case Event(Suspend, _) => goto(Suspended)
-    case Event(MusicPlayer.SongFinished(song), Songs(Nil, Some(current))) if song equals current => goto(Waiting) using Songs(Nil, None)
-    case Event(MusicPlayer.SongFinished(song), Songs(next :: rest, Some(current))) if song equals current => {
-      musicPlayer ! MusicPlayer.Play(next)
+    case Event(MusicPlayer.SongFinished(song), Songs(Nil, Some(current))) if song equals current.song => goto(Waiting) using Songs(Nil, None)
+    case Event(MusicPlayer.SongFinished(song), Songs(next :: rest, Some(current))) if song equals current.song => {
+      musicPlayer ! MusicPlayer.Play(next.song)
       stay using Songs(rest, Some(next))
     }
     case _ => stay
   }
   
   when(Waiting) {
-    case Event(Append(song), Songs(Nil, None)) => {
-      musicPlayer ! MusicPlayer.Play(song)
-      goto(Active) using Songs(Nil, Some(song))
+    case Event(Append(songEntry), Songs(Nil, None)) => {
+      musicPlayer ! MusicPlayer.Play(songEntry.song)
+      goto(Active) using Songs(Nil, Some(songEntry))
     }
     case Event(Suspend, Songs(Nil, None)) => goto(Suspended)
     case Event(Activate, Songs(Nil, None)) => stay
@@ -66,9 +67,9 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with FS
   when(Suspended) {
     case Event(Suspend, _) => stay
     case Event(Append(song), Songs(newestFirst, None)) => stay using Songs(song +: newestFirst, None)
-    case Event(Activate, Songs(song :: rest, None)) => {
-      musicPlayer ! MusicPlayer.Play(song)
-      goto(Active) using Songs(rest, Some(song))
+    case Event(Activate, Songs(songEntry :: rest, None)) => {
+      musicPlayer ! MusicPlayer.Play(songEntry.song)
+      goto(Active) using Songs(rest, Some(songEntry))
     }
     case Event(Activate, Songs(Nil, None)) => goto(Waiting)
     case Event(MusicPlayer.SongFinished, _) => stay
