@@ -56,6 +56,8 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       stream.setState(MusicStream.Waiting, MusicStream.Songs(List()), timeout, None)
       stream.receive(MusicStream.Append(song))
       stream.stateName should be (MusicStream.Active)
+      probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
+      probe.expectMsg(MusicPlayer.Play(song))
     }
     "Waiting -> Suspended given Suspend" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
