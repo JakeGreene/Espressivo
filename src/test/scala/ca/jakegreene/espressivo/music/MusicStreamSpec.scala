@@ -105,14 +105,16 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       val (stream, player, probe) = createStreamPlayerAndProbe()
       val playingSong = mock[Song]
       val nextSong = mock[Song]
-      stream.setState(MusicStream.Active, MusicStream.Songs(List(playingSong, nextSong)), timeout, None)
+      stream.setState(MusicStream.Active, MusicStream.Songs(List(nextSong)), timeout, None)
       stream.receive(MusicPlayer.SongFinished(playingSong))
       stream.stateName should be (MusicStream.Active)
+      probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
+      probe.expectMsg(MusicPlayer.Play(nextSong))
     }
     "move to Waiting if told a Song is finished and there are no more songs" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
       val playingSong = mock[Song]
-      stream.setState(MusicStream.Active, MusicStream.Songs(List(playingSong)), timeout, None)
+      stream.setState(MusicStream.Active, MusicStream.Songs(List()), timeout, None)
       stream.receive(MusicPlayer.SongFinished(playingSong))
       stream.stateName should be (MusicStream.Waiting)
     }
