@@ -15,7 +15,7 @@ resolvers += "spray repo" at "http://repo.spray.io"
 
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-scalacOptions ++= Seq("-unchecked", "-deprecation")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
 libraryDependencies ++= Seq( 
     "com.typesafe.akka" %% "akka-actor" % "2.1.4",

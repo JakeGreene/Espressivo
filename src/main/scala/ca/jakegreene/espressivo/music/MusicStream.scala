@@ -14,6 +14,7 @@ object MusicStream {
   case object Activate extends Request
   case object Suspend extends Request
   case class Append(song: SongEntry) extends Request
+  case object GetStatus extends Request
   
   sealed trait State
   case object Ready extends State
@@ -22,58 +23,61 @@ object MusicStream {
   case object Waiting extends State
   
   sealed trait Data
-  case class Songs(newestFirst: List[SongEntry], current: Option[SongEntry]) extends Data
+  case class Status(nextSongs: List[SongEntry], current: Option[SongEntry]) extends Data
 }
 class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with LoggingFSM[State, Data] {
   
   musicPlayer ! MusicPlayer.ListenForSongEnd(self)
-  startWith(Ready, Songs(Nil, None))
+  startWith(Ready, Status(Nil, None))
   
   when(Ready) {
-    case Event(Activate, Songs(Nil, None)) => goto (Waiting) using Songs(Nil, None)
-    case Event(Activate, Songs(songEntry :: rest, None)) => {
+    case Event(Activate, Status(Nil, None)) => goto (Waiting) using Status(Nil, None)
+    case Event(Activate, Status(songEntry :: rest, None)) => {
       musicPlayer ! MusicPlayer.Play(songEntry.song)
-      goto (Active) using Songs(rest, Some(songEntry))
+      goto (Active) using Status(rest, Some(songEntry))
     }
-    case Event(Append(song), Songs(songs, None)) => stay using Songs(song +: songs, None) // Newest song at the head of the list
+    case Event(Append(song), Status(songs, None)) => stay using Status(song +: songs, None) // Newest song at the head of the list
     case Event(Suspend, _) => stay
     case Event(MusicPlayer.SongFinished, _) => stay
-    case msg => stay
   }
   
   when(Active) {
-    case Event(Append(song), Songs(newestFirst, None)) => stay using Songs(song +: newestFirst, None)
+    case Event(Append(song), Status(newestFirst, None)) => stay using Status(song +: newestFirst, None)
     case Event(Activate, _) => stay
     case Event(Suspend, _) => goto(Suspended)
-    case Event(MusicPlayer.SongFinished(song), Songs(Nil, Some(current))) if song equals current.song => goto(Waiting) using Songs(Nil, None)
-    case Event(MusicPlayer.SongFinished(song), Songs(next :: rest, Some(current))) if song equals current.song => {
+    case Event(MusicPlayer.SongFinished(song), Status(Nil, Some(current))) if song equals current.song => goto(Waiting) using Status(Nil, None)
+    case Event(MusicPlayer.SongFinished(song), Status(next :: rest, Some(current))) if song equals current.song => {
       musicPlayer ! MusicPlayer.Play(next.song)
-      stay using Songs(rest, Some(next))
+      stay using Status(rest, Some(next))
     }
-    case _ => stay
   }
   
   when(Waiting) {
-    case Event(Append(songEntry), Songs(Nil, None)) => {
+    case Event(Append(songEntry), Status(Nil, None)) => {
       musicPlayer ! MusicPlayer.Play(songEntry.song)
-      goto(Active) using Songs(Nil, Some(songEntry))
+      goto(Active) using Status(Nil, Some(songEntry))
     }
-    case Event(Suspend, Songs(Nil, None)) => goto(Suspended)
-    case Event(Activate, Songs(Nil, None)) => stay
+    case Event(Suspend, Status(Nil, None)) => goto(Suspended)
+    case Event(Activate, Status(Nil, None)) => stay
     case Event(MusicPlayer.SongFinished, _) => stay
-    case _ => stay
   }
   
   when(Suspended) {
     case Event(Suspend, _) => stay
-    case Event(Append(song), Songs(newestFirst, None)) => stay using Songs(song +: newestFirst, None)
-    case Event(Activate, Songs(songEntry :: rest, None)) => {
+    case Event(Append(song), Status(newestFirst, None)) => stay using Status(song +: newestFirst, None)
+    case Event(Activate, Status(songEntry :: rest, None)) => {
       musicPlayer ! MusicPlayer.Play(songEntry.song)
-      goto(Active) using Songs(rest, Some(songEntry))
+      goto(Active) using Status(rest, Some(songEntry))
     }
-    case Event(Activate, Songs(Nil, None)) => goto(Waiting)
+    case Event(Activate, Status(Nil, None)) => goto(Waiting)
     case Event(MusicPlayer.SongFinished, _) => stay
-    case _ => stay
+  }
+  
+  whenUnhandled {
+    case Event(GetStatus, status @ Status(_, _)) => {
+      sender ! status
+      stay
+    }
   }
   
   initialize
