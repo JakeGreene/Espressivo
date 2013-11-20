@@ -38,7 +38,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
     }
     case Event(Append(song), Status(songs, None)) => stay using Status(song +: songs, None) // Newest song at the head of the list
     case Event(Suspend, _) => stay
-    case Event(MusicPlayer.SongFinished, _) => stay
+    case Event(MusicPlayer.SongFinished(_), _) => stay
   }
   
   when(Active) {
@@ -59,7 +59,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
     }
     case Event(Suspend, Status(Nil, None)) => goto(Suspended)
     case Event(Activate, Status(Nil, None)) => stay
-    case Event(MusicPlayer.SongFinished, _) => stay
+    case Event(MusicPlayer.SongFinished(_), _) => stay
   }
   
   when(Suspended) {
@@ -70,7 +70,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
       goto(Active) using Status(rest, Some(songEntry))
     }
     case Event(Activate, Status(Nil, None)) => goto(Waiting)
-    case Event(MusicPlayer.SongFinished, _) => stay
+    case Event(MusicPlayer.SongFinished(_), _) => stay
   }
   
   whenUnhandled {
