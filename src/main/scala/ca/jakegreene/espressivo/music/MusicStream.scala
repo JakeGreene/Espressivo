@@ -42,7 +42,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
   }
   
   when(Active) {
-    case Event(Append(song), Status(newestFirst, None)) => stay using Status(song +: newestFirst, None)
+    case Event(Append(song), Status(newestFirst, playing)) => stay using Status(song +: newestFirst, playing)
     case Event(Activate, _) => stay
     case Event(Suspend, _) => goto(Suspended)
     case Event(MusicPlayer.SongFinished(song), Status(Nil, Some(current))) if song equals current.song => goto(Waiting) using Status(Nil, None)
