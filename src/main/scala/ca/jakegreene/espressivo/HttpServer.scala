@@ -36,13 +36,13 @@ object MyJsonProtocol extends DefaultJsonProtocol {
  * communicating with a client6
  */
 case class SongDescription(id: SongId, name: String, artist: String, album: String)
-case class StreamDescription(songs: Seq[SongId], current: Option[SongDescription])
+case class StreamDescription(songs: Seq[SongId], current: Option[SongId])
 
 object HttpServer {
   def describe(entry: SongEntry): SongDescription = SongDescription(entry.id, entry.song.title, entry.song.artist, entry.song.album)
   def describe(stream: MusicStream.Status): StreamDescription = {
     val nextSongs = stream.nextSongs.map(entry => entry.id)
-    val current = stream.current.map(describe(_))
+    val current = stream.current.map(describe(_).id)
     StreamDescription(nextSongs, current)
   }
 }
@@ -82,6 +82,13 @@ class HttpServer(player: ActorRef) extends Actor with HttpService with ActorLogg
         get {
           complete {
             (player ? GetStream).mapTo[MusicStream.Status].map(describe(_))
+          }
+        }
+      } ~
+      path("stream" / "current") {
+        get {
+          complete {
+            (player ? GetStream).mapTo[MusicStream.Status].map(describe(_).current)
           }
         }
       }

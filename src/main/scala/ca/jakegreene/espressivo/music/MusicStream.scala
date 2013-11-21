@@ -74,7 +74,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
   }
   
   whenUnhandled {
-    case Event(GetStatus, status @ Status(_, _)) => {
+    case Event(GetStatus, status: Status) => {
       sender ! status
       stay
     }
