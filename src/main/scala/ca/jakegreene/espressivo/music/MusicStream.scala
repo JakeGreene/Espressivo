@@ -46,7 +46,10 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
   when(Active) {
     case Event(Append(song), Status(songs, playing)) => stay using Status(songs enqueue song, playing)
     case Event(Activate, _) => stay
-    case Event(Suspend, _) => goto(Suspended)
+    case Event(Suspend, _) => {
+      musicPlayer ! MusicPlayer.Pause
+      goto(Suspended)
+    }
     case Event(MusicPlayer.SongFinished(song), Status(Queue(), Some(current))) if song equals current.song => goto(Waiting) using Status(Queue(), None)
     case Event(MusicPlayer.SongFinished(song), Status(songs: Queue[SongEntry], Some(current))) if song equals current.song => {
       setupSong(songs)
@@ -65,9 +68,9 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
   
   when(Suspended) {
     case Event(Suspend, _) => stay
-    case Event(Append(song), Status(songs, None)) => stay using Status(songs enqueue song, None)
-    case Event(Activate, Status(Queue(), None)) => goto(Waiting)
-    case Event(Activate, Status(songs: Queue[SongEntry], None)) => {
+    case Event(Append(song), Status(songs, _)) => stay using Status(songs enqueue song, None)
+    case Event(Activate, Status(Queue(), _)) => goto(Waiting)
+    case Event(Activate, Status(songs, _)) => {
       setupSong(songs)
     }
     case Event(MusicPlayer.SongFinished(_), _) => stay

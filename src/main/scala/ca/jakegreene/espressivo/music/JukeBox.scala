@@ -19,6 +19,8 @@ object JukeBox {
   case class GetSong(id: SongId) extends Request
   case object GetStream extends Request
   case class SetLast(id: SongId) extends Request
+  case object Activate extends Request
+  case object Suspend extends Request
   
   sealed trait Response
   case class Music(songs: Iterable[SongEntry]) extends Response
@@ -47,5 +49,7 @@ class JukeBox(songLibrary: MusicLibrary) extends Actor with ActorLogging {
     case SetLast(id) => {
       musicStream ! MusicStream.Append(SongEntry(id, songLibrary(id)))
     }
+    case Activate => musicStream ! MusicStream.Activate
+    case Suspend => musicStream ! MusicStream.Suspend
   }
 }

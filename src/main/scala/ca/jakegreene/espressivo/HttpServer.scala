@@ -115,6 +115,17 @@ class HttpServer(player: ActorRef) extends Actor with HttpService with ActorLogg
             getStatus().map(status => StateDescription(describe(status).state))
           }
         }
+        put {
+          entity(as[StateDescription]) { stateDesc =>
+            complete {
+              stateDesc.state match {
+                case "Active" => player ! JukeBox.Activate
+                case "Suspended" => player ! JukeBox.Suspend
+              }
+              BasicResponse("Stream Updated")
+            }  
+          }
+        }
       }
       
   def receive = runRoute(myRoute)
