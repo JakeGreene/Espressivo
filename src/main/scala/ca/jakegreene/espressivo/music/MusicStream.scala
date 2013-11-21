@@ -69,8 +69,12 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
   when(Suspended) {
     case Event(Suspend, _) => stay
     case Event(Append(song), Status(songs, _)) => stay using Status(songs enqueue song, None)
-    case Event(Activate, Status(Queue(), _)) => goto(Waiting)
-    case Event(Activate, Status(songs, _)) => {
+    case Event(Activate, Status(_, Some(pausedSong))) => {
+      musicPlayer ! MusicPlayer.Play(pausedSong.song)
+      goto(Active)
+    }
+    case Event(Activate, Status(Queue(), None)) => goto(Waiting)
+    case Event(Activate, Status(songs, None)) => {
       setupSong(songs)
     }
     case Event(MusicPlayer.SongFinished(_), _) => stay

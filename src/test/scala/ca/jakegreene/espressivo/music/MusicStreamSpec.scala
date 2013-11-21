@@ -134,7 +134,7 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       stream.receive(MusicStream.Append(songEntry))
       stream.stateName should be (MusicStream.Suspended)
     }
-    "Suspended -> Active given Activate with a song to play" in {
+    "Suspended -> Active given Activate with a new song to play" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
       val songEntry = mockSongEntry(SongId(0))
       stream.setState(MusicStream.Suspended, MusicStream.Status(Queue(songEntry), None), timeout, None)
@@ -142,6 +142,16 @@ class MusicStreamSpec extends TestKit(ActorSystem("MusicStreamSpec")) with WordS
       stream.stateName should be (MusicStream.Active)
       probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
       probe.expectMsg(MusicPlayer.Play(songEntry.song))
+    }
+    "Suspended -> Active given Activate with a song paused" in {
+      val (stream, player, probe) = createStreamPlayerAndProbe()
+      val newSong = mockSongEntry(SongId(0))
+      val pausedSong = mockSongEntry(SongId(1))
+      stream.setState(MusicStream.Suspended, MusicStream.Status(Queue(newSong), Some(pausedSong)), timeout, None)
+      stream.receive(MusicStream.Activate)
+      stream.stateName should be (MusicStream.Active)
+      probe.expectMsg(MusicPlayer.ListenForSongEnd(stream))
+      probe.expectMsg(MusicPlayer.Play(pausedSong.song))
     }
     "Suspended -> Waiting given Activate with no song to play" in {
       val (stream, player, probe) = createStreamPlayerAndProbe()
