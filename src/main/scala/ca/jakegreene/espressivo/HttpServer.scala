@@ -36,14 +36,14 @@ object MyJsonProtocol extends DefaultJsonProtocol {
  * Description Case Classes represent the data to be marshalled/unmarshelled when
  * communicating with a client6
  */
-case class SongDescription(id: SongId, name: String, artist: String, album: String)
-case class StreamDescription(songs: Seq[SongId], current: Option[SongId], last: Option[SongId], state: String)
+case class SongDescription(id: Int, name: String, artist: String, album: String)
+case class StreamDescription(songs: Seq[Int], current: Option[Int], last: Option[Int], state: String)
 case class StateDescription(state: String)
 
 object HttpServer {
-  def describe(entry: SongEntry): SongDescription = SongDescription(entry.id, entry.song.title, entry.song.artist, entry.song.album)
+  def describe(entry: SongEntry): SongDescription = SongDescription(entry.id.id, entry.song.title, entry.song.artist, entry.song.album)
   def describe(stream: MusicStream.StreamStatus): StreamDescription = {
-    val nextSongs = stream.nextSongs.map(entry => entry.id)
+    val nextSongs = stream.nextSongs.map(entry => entry.id.id)
     val current = stream.current.map(describe(_).id)
     StreamDescription(nextSongs, current, nextSongs.lastOption, stream.state.toString())
   }
@@ -90,14 +90,14 @@ class HttpServer(player: ActorRef) extends Actor with HttpService with ActorLogg
       path("stream" / "current") {
         get {
           complete {
-            getStatus().map(describe(_).current)
+            getStatus().map(describe(_).current.map(id => SongId(id)))
           }
         }
       } ~
       path("stream" / "last") {
         get {
           complete {
-            getStatus().map(describe(_).last)
+            getStatus().map(describe(_).last.map(id => SongId(id)))
           }
         } ~
         put {
