@@ -35,8 +35,8 @@ cp espressivo.jar $ESPRESSIVO_HOME
 cd $ESPRESSIVO_HOME
 touch app.conf
 ```
-Espressivo uses a [HOCON] configuration file for easy configuration.
-Using your editor of choice, fill in app.conf with the following
+Espressivo uses a [HOCON](https://github.com/typesafehub/config/blob/master/HOCON.md) configuration file for easy configuration.
+Using your editor of choice, fill in app.conf with the following (replacing values where required)
 ```
 espressivo {
   music {
