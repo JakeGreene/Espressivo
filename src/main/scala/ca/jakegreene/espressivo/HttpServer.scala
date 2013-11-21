@@ -34,7 +34,7 @@ object MyJsonProtocol extends DefaultJsonProtocol {
 
 /*
  * Description Case Classes represent the data to be marshalled/unmarshelled when
- * communicating with a client6
+ * communicating with a client
  */
 case class SongDescription(id: Int, name: String, artist: String, album: String)
 case class StreamDescription(songs: Seq[Int], current: Option[Int], last: Option[Int], state: String)
