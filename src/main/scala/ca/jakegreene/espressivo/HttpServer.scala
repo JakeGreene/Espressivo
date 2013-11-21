@@ -28,7 +28,8 @@ object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val responseFormat = jsonFormat1(BasicResponse)
   implicit val songIdFormat = jsonFormat1(SongId)
   implicit val songDescFormat = jsonFormat4(SongDescription)
-  implicit val streamDescFormat = jsonFormat3(StreamDescription)
+  implicit val streamDescFormat = jsonFormat4(StreamDescription)
+  implicit val stateDescFormat = jsonFormat1(StateDescription)
 }
 
 /*
@@ -36,17 +37,18 @@ object MyJsonProtocol extends DefaultJsonProtocol {
  * communicating with a client6
  */
 case class SongDescription(id: SongId, name: String, artist: String, album: String)
-case class StreamDescription(songs: Seq[SongId], current: Option[SongId], last: Option[SongId])
+case class StreamDescription(songs: Seq[SongId], current: Option[SongId], last: Option[SongId], state: String)
+case class StateDescription(state: String)
 
 object HttpServer {
   def describe(entry: SongEntry): SongDescription = SongDescription(entry.id, entry.song.title, entry.song.artist, entry.song.album)
-  def describe(stream: MusicStream.Status): StreamDescription = {
+  def describe(stream: MusicStream.StreamStatus): StreamDescription = {
     val nextSongs = stream.nextSongs.map(entry => entry.id)
     val current = stream.current.map(describe(_).id)
-    StreamDescription(nextSongs, current, nextSongs.lastOption)
+    StreamDescription(nextSongs, current, nextSongs.lastOption, stream.state.toString())
   }
 }
-
+ 
 class HttpServer(player: ActorRef) extends Actor with HttpService with ActorLogging {
   import MyJsonProtocol._
   import IdImplicits._
@@ -106,9 +108,16 @@ class HttpServer(player: ActorRef) extends Actor with HttpService with ActorLogg
             }
           }
         }
+      } ~
+      path("stream" / "state") {
+        get {
+          complete {
+            getStatus().map(status => StateDescription(describe(status).state))
+          }
+        }
       }
       
   def receive = runRoute(myRoute)
   
-  def getStatus() = (player ? GetStream).mapTo[MusicStream.Status]
+  def getStatus() = (player ? GetStream).mapTo[MusicStream.StreamStatus]
 }

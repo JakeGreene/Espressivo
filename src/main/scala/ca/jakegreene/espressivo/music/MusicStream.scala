@@ -5,7 +5,6 @@ import akka.actor.ActorRef
 import scala.collection.mutable.ListBuffer
 import akka.actor.ActorLogging
 import akka.actor.FSM
-import MusicStream._
 import akka.actor.LoggingFSM
 import scala.collection.immutable.Queue
 
@@ -24,8 +23,12 @@ object MusicStream {
   
   sealed trait Data
   case class Status(nextSongs: Queue[SongEntry], current: Option[SongEntry]) extends Data
+  
+  case class StreamStatus(nextSongs: Queue[SongEntry], current: Option[SongEntry], state: State)
 }
+import MusicStream.{State, Data}
 class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with LoggingFSM[State, Data] {
+  import MusicStream._
   
   musicPlayer ! MusicPlayer.ListenForSongEnd(self)
   startWith(Ready, Status(Queue(), None))
@@ -72,7 +75,7 @@ class MusicStream(musicPlayer: ActorRef) extends Actor with ActorLogging with Lo
   
   whenUnhandled {
     case Event(GetStatus, status: Status) => {
-      sender ! status
+      sender ! StreamStatus(status.nextSongs, status.current, this.stateName)
       stay
     }
   }

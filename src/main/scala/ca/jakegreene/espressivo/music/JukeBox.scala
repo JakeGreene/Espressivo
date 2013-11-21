@@ -41,7 +41,7 @@ class JukeBox(songLibrary: MusicLibrary) extends Actor with ActorLogging {
        * Store the current sender to remove any possible synchronization errors
        */
       val currentSender = sender
-      val futureStatus = (musicStream ? MusicStream.GetStatus).mapTo[MusicStream.Status]
+      val futureStatus = (musicStream ? MusicStream.GetStatus).mapTo[MusicStream.StreamStatus]
       futureStatus pipeTo currentSender
     }
     case SetLast(id) => {
