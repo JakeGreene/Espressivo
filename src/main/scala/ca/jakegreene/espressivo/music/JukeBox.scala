@@ -18,6 +18,7 @@ object JukeBox {
   case object GetMusicLibrary extends Request
   case class GetSong(id: SongId) extends Request
   case object GetStream extends Request
+  case class SetLast(id: SongId) extends Request
   
   sealed trait Response
   case class Music(songs: Iterable[SongEntry]) extends Response
@@ -42,6 +43,9 @@ class JukeBox(songLibrary: MusicLibrary) extends Actor with ActorLogging {
       val currentSender = sender
       val futureStatus = (musicStream ? MusicStream.GetStatus).mapTo[MusicStream.Status]
       futureStatus pipeTo currentSender
+    }
+    case SetLast(id) => {
+      musicStream ! MusicStream.Append(SongEntry(id, songLibrary(id)))
     }
   }
 }

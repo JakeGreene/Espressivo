@@ -28,7 +28,7 @@ object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val responseFormat = jsonFormat1(BasicResponse)
   implicit val songIdFormat = jsonFormat1(SongId)
   implicit val songDescFormat = jsonFormat4(SongDescription)
-  implicit val streamDescFormat = jsonFormat2(StreamDescription)
+  implicit val streamDescFormat = jsonFormat3(StreamDescription)
 }
 
 /*
@@ -36,14 +36,18 @@ object MyJsonProtocol extends DefaultJsonProtocol {
  * communicating with a client6
  */
 case class SongDescription(id: SongId, name: String, artist: String, album: String)
-case class StreamDescription(songs: Seq[SongId], current: Option[SongId])
+case class StreamDescription(songs: Seq[SongId], current: Option[SongId], last: Option[SongId])
 
 object HttpServer {
   def describe(entry: SongEntry): SongDescription = SongDescription(entry.id, entry.song.title, entry.song.artist, entry.song.album)
   def describe(stream: MusicStream.Status): StreamDescription = {
     val nextSongs = stream.nextSongs.map(entry => entry.id)
     val current = stream.current.map(describe(_).id)
-    StreamDescription(nextSongs, current)
+    val last = nextSongs.length match {
+      case 0 => None
+      case _ => Some(nextSongs.head)
+    }
+    StreamDescription(nextSongs, current, last)
   }
 }
 
@@ -81,17 +85,34 @@ class HttpServer(player: ActorRef) extends Actor with HttpService with ActorLogg
       path("stream") {
         get {
           complete {
-            (player ? GetStream).mapTo[MusicStream.Status].map(describe(_))
+            getStatus().map(describe(_))
           }
         }
       } ~
       path("stream" / "current") {
         get {
           complete {
-            (player ? GetStream).mapTo[MusicStream.Status].map(describe(_).current)
+            getStatus().map(describe(_).current)
+          }
+        }
+      } ~
+      path("stream" / "last") {
+        get {
+          complete {
+            getStatus().map(describe(_).last)
+          }
+        } ~
+        put {
+          entity(as[SongId]) { id =>
+            complete {
+              player ! JukeBox.SetLast(id)
+              BasicResponse(s"Song $id appended to music stream")  
+            }
           }
         }
       }
       
   def receive = runRoute(myRoute)
+  
+  def getStatus() = (player ? GetStream).mapTo[MusicStream.Status]
 }
