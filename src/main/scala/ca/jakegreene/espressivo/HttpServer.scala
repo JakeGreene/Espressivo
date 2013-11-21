@@ -43,11 +43,7 @@ object HttpServer {
   def describe(stream: MusicStream.Status): StreamDescription = {
     val nextSongs = stream.nextSongs.map(entry => entry.id)
     val current = stream.current.map(describe(_).id)
-    val last = nextSongs.length match {
-      case 0 => None
-      case _ => Some(nextSongs.head)
-    }
-    StreamDescription(nextSongs, current, last)
+    StreamDescription(nextSongs, current, nextSongs.lastOption)
   }
 }
 
